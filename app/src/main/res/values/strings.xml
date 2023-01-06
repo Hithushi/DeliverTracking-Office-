@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">DeliverTracking</string>
+    <string name="app_name">Deliver Tracking</string>
     <string name="todo">TODO</string>
     <string name="mailbag_delivery">Mailbag Delivery</string>
     <string name="barcode">Barcode</string>
@@ -15,4 +15,10 @@
     <string name="scan">Scan</string>
     <string name="submit">submit</string>
     <string name="location">location</string>
+    <string name="mailbag_collection">Mailbag Collection</string>
+    <string name="collection_status">Collection Status</string>
+    <string name="mailbag_delivery_home">Mailbag\nDelivery</string>
+    <string name="mailbag_delivery_bulk_home">Mailbag\nDelivery\n(Bulk)</string>
+    <string name="mailbag_collection_home">Mailbag\nCollection</string>
+    <string name="mailbag_collection_bulk_home">Mailbag\nCollection\n(Bulk)</string>
 </resources>
