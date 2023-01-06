@@ -17,7 +17,6 @@ public class HomeScreen extends AppCompatActivity implements View.OnClickListene
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home_screen);
-        getWindow().setStatusBarColor(ContextCompat.getColor(HomeScreen.this, R.color.dark_blue));
 
         MailbagD = findViewById(R.id.mailbag_deliver);
         MailbagC = findViewById(R.id.mailbag_collection);

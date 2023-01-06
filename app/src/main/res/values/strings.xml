@@ -1,4 +1,18 @@
 <resources>
     <string name="app_name">DeliverTracking</string>
     <string name="todo">TODO</string>
+    <string name="mailbag_delivery">Mailbag Delivery</string>
+    <string name="barcode">Barcode</string>
+    <string name="deliver_status">Deliver Status</string>
+    <string name="address">Address</string>
+    <string name="city">City</string>
+    <string name="date">Date</string>
+    <string name="time">Time</string>
+    <string name="remark">Remark</string>
+    <string name="result">Result</string>
+    <string name="enter_address">Enter Address</string>
+    <string name="enter_comment">Enter Comment</string>
+    <string name="scan">Scan</string>
+    <string name="submit">submit</string>
+    <string name="location">location</string>
 </resources>
