@@ -1,6 +1,7 @@
 package com.example.delivertracking;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
@@ -8,6 +9,7 @@ import android.location.Geocoder;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -29,14 +31,18 @@ import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
 public class MailbagDeliver extends AppCompatActivity {
+    Connection conn = null;
 
-    TextView city, locationT, date, time, barcodeResult;
+    TextView city, locationT, date, time, barcodeResult, longitude, latitude;
     EditText remark, address;
     Button scan_btn, submit_btn;
     Spinner spinner;
@@ -46,6 +52,7 @@ public class MailbagDeliver extends AppCompatActivity {
 
     private final static int REQUEST_CODE = 100;
 
+    @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,6 +68,8 @@ public class MailbagDeliver extends AppCompatActivity {
         scan_btn = findViewById(R.id.scan_btn);
         submit_btn = findViewById(R.id.submit_btn);
         spinner = findViewById(R.id.statusSpinner);
+        longitude = findViewById(R.id.longitude);
+        latitude = findViewById(R.id.latitude);
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
         scan_btn.setOnClickListener(v -> {
@@ -81,6 +90,9 @@ public class MailbagDeliver extends AppCompatActivity {
                     getLastLocation();
                     date.setText(getCurrentDate());
                     time.setText(getCurrentTime());
+                    scan_btn.setEnabled(false);
+                } else {
+                    scan_btn.setEnabled(true);
                 }
             }
             @Override
@@ -92,12 +104,28 @@ public class MailbagDeliver extends AppCompatActivity {
         date.addTextChangedListener(addressTextWatcher);
 
         submit_btn.setOnClickListener(v -> {
+            try {
+                DBConnection connect = new DBConnection();
+                conn = connect.createConnection();
+                if (conn != null) {
+                    Toast.makeText(this,"Connection Established", Toast.LENGTH_LONG).show();
+                    String sqlInsert = "Insert into TBL_Mailbag_Delivery values ('"+barcodeResult.getText().toString()+"','"+address.getText().toString()+"','"+city.getText().toString()+"','"+date.getText().toString()+"','"+time.getText().toString()+"','"+locationT.getText().toString()+"','"+longitude.getText().toString()+"','"+latitude.getText().toString()+"','"+remark.getText().toString()+"')";
+                    Statement statement = conn.createStatement();
+                    ResultSet resultSet = statement.executeQuery(sqlInsert);
+                } else {
+                    Toast.makeText(this, "Connection not established", Toast.LENGTH_LONG).show();
+                }
+            } catch (Exception e) {
+                Log.e("Error: ",e.getMessage());
+            }
             barcodeResult.setText(null);
             address.getText().clear();
             city.setText(null);
             locationT.setText(null);
             time.setText(null);
             date.setText(null);
+            longitude.setText(null);
+            latitude.setText(null);
             remark.getText().clear();
             spinner.setAdapter(adapter);
         });
@@ -136,6 +164,8 @@ public class MailbagDeliver extends AppCompatActivity {
                             List<Address> addresses;
                             try {
                                 addresses = geocoder.getFromLocation(location.getLatitude(),location.getLongitude(),1);
+                                latitude.setText("latitude :" +addresses.get(0).getLatitude());
+                                longitude.setText("longitude :" +addresses.get(0).getLongitude());
                                 address.setText(addresses.get(0).getAddressLine(0));
                                 locationT.setText(addresses.get(0).getAddressLine(0));
                                 city.setText(addresses.get(0).getLocality());
