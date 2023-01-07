@@ -90,6 +90,7 @@ public class MailbagCollection extends AppCompatActivity {
                     getLastLocation();
                     date.setText(getCurrentDate());
                     time.setText(getCurrentTime());
+                    barcodeResult.setText(null);
                     scan_btn.setEnabled(false);
                 } else {
                     scan_btn.setEnabled(true);

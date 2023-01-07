@@ -23,4 +23,7 @@
     <string name="mailbag_collection_bulk_home">Mailbag\nCollection\n(Bulk)</string>
     <string name="longitude">Longitude</string>
     <string name="latitude">Latitude</string>
+    <string name="package_list">Package List</string>
+    <string name="mailbag_collection_bulk">Mailbag Collection Bulk</string>
+    <string name="mailbag_deliver_bulk">Mailbag Deliver Bulk</string>
 </resources>
