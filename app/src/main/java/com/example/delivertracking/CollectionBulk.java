@@ -24,8 +24,12 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.delivertracking.Adapter.MyAdapter;
+import com.example.delivertracking.Database.DBHelper;
+import com.example.delivertracking.Model.ListItem;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.zxing.integration.android.IntentIntegrator;
@@ -33,7 +37,9 @@ import com.google.zxing.integration.android.IntentResult;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -47,12 +53,17 @@ public class CollectionBulk extends AppCompatActivity {
     String[] status = {"Mailbag Received","Unable to Collect Mailbag"};
     RecyclerView recyclerView;
     private LinearLayout CustomerForm;
+    ArrayList<ListItem> arrayList;
+    MyAdapter myAdapter;
+    HashSet<ListItem> hashSet = new HashSet<>();
+
+    DBHelper helper;
 
     FusedLocationProviderClient fusedLocationProviderClient;
 
     private final static int REQUEST_CODE = 100;
 
-    @SuppressLint("MissingInflatedId")
+    @SuppressLint({"MissingInflatedId", "NotifyDataSetChanged"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,6 +83,10 @@ public class CollectionBulk extends AppCompatActivity {
         recyclerView = findViewById(R.id.recyclerView);
         CustomerForm = findViewById(R.id.btn_customer_form);
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        helper = new DBHelper(this);
 
         AtomicBoolean firstClick = new AtomicBoolean(true);
         scan_btn.setOnClickListener(v -> {
@@ -111,6 +126,15 @@ public class CollectionBulk extends AppCompatActivity {
             }
         });
 
+        arrayList = helper.getAllInformation();
+        if (arrayList.size() > 0) {
+            hashSet.addAll(arrayList);
+            arrayList.clear();
+            arrayList.addAll(hashSet);
+            myAdapter = new MyAdapter(arrayList,this);
+            recyclerView.setAdapter(myAdapter);
+        }
+
         date.addTextChangedListener(addressTextWatcher);
 
         submit_btn.setOnClickListener(v -> {
@@ -123,8 +147,22 @@ public class CollectionBulk extends AppCompatActivity {
             longitude.setText(null);
             latitude.setText(null);
             spinner.setAdapter(adapter);
+            arrayList.clear();
+            myAdapter.notifyDataSetChanged();
+            helper.deleteData();
             firstClick.set(true);
         });
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    @Override
+    public void onBackPressed() {
+        if (arrayList.size() > 0) {
+            arrayList.clear();
+            helper.deleteData();
+            myAdapter.notifyDataSetChanged();
+        }
+        super.onBackPressed();
     }
 
     private final TextWatcher addressTextWatcher = new TextWatcher() {
@@ -198,6 +236,7 @@ public class CollectionBulk extends AppCompatActivity {
         intentIntegrator.initiateScan();
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         IntentResult result = IntentIntegrator.parseActivityResult(requestCode,resultCode,data);
@@ -206,6 +245,17 @@ public class CollectionBulk extends AppCompatActivity {
                 Toast.makeText(this, "Please scan Barcode", Toast.LENGTH_SHORT).show();
             } else {
                 barcodeResult.setText(result.getContents());
+                String isInserted = String.valueOf(helper.insertData(result.getContents(),result.toString()));
+
+                if (result.getContents().equals(isInserted)){
+                    Toast.makeText(this, "Already scanned", Toast.LENGTH_SHORT).show();
+                } else {
+                    arrayList.clear();
+                    arrayList = helper.getAllInformation();
+                    myAdapter = new MyAdapter(arrayList,this);
+                    recyclerView.setAdapter(myAdapter);
+                    myAdapter.notifyDataSetChanged();
+                }
             }
         }
         super.onActivityResult(requestCode, resultCode, data);

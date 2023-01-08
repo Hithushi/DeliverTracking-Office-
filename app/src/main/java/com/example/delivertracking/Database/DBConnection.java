@@ -1,4 +1,4 @@
-package com.example.delivertracking;
+package com.example.delivertracking.Database;
 
 import android.os.StrictMode;
 import android.util.Log;
