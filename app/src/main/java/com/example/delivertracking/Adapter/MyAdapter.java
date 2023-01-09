@@ -37,7 +37,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyAdapterViewHolde
     @Override
     public void onBindViewHolder(@NonNull MyAdapterViewHolder holder, int position) {
         ListItem listItem = listItemArrayList.get(position);
-        holder.textViewTime.setText(new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(new Date()));
+        holder.textViewTime.setText(listItem.getTime());
         holder.textViewCode.setText(listItem.getCode());
     }
     @Override

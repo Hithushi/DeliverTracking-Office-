@@ -62,6 +62,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
                 ListItem listItem = new ListItem(id,code,time);
 
+
                 arrayList.add(listItem);
                 hashSet.addAll(arrayList);
                 arrayList.clear();

@@ -111,9 +111,9 @@ public class MailbagDeliver extends AppCompatActivity {
                 conn = connect.createConnection();
                 if (conn != null) {
                     Toast.makeText(this,"Connection Established", Toast.LENGTH_LONG).show();
-                    String sqlInsert = "Insert into TBL_Mailbag_Delivery values ('"+barcodeResult.getText().toString()+"','"+address.getText().toString()+"','"+city.getText().toString()+"','"+date.getText().toString()+"','"+time.getText().toString()+"','"+locationT.getText().toString()+"','"+longitude.getText().toString()+"','"+latitude.getText().toString()+"','"+remark.getText().toString()+"')";
+                    String sqlInsert = "Insert into TBL_Mailbag_Delivery values ('"+barcodeResult.getText().toString()+"','"+spinner.getSelectedItem().toString()+"','"+address.getText().toString()+"','"+city.getText().toString()+"','"+date.getText().toString()+"','"+time.getText().toString()+"','"+locationT.getText().toString()+"','"+longitude.getText().toString()+"','"+latitude.getText().toString()+"','"+remark.getText().toString()+"')";
                     Statement statement = conn.createStatement();
-                    ResultSet resultSet = statement.executeQuery(sqlInsert);
+                    statement.executeQuery(sqlInsert);
                 } else {
                     Toast.makeText(this, "Connection not established", Toast.LENGTH_LONG).show();
                 }
@@ -166,8 +166,8 @@ public class MailbagDeliver extends AppCompatActivity {
                             List<Address> addresses;
                             try {
                                 addresses = geocoder.getFromLocation(location.getLatitude(),location.getLongitude(),1);
-                                latitude.setText("latitude :" +addresses.get(0).getLatitude());
-                                longitude.setText("longitude :" +addresses.get(0).getLongitude());
+                                latitude.setText(""+addresses.get(0).getLatitude());
+                                longitude.setText(""+addresses.get(0).getLongitude());
                                 address.setText(addresses.get(0).getAddressLine(0));
                                 locationT.setText(addresses.get(0).getAddressLine(0));
                                 city.setText(addresses.get(0).getLocality());

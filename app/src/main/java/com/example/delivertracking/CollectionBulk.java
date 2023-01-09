@@ -4,11 +4,14 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -28,6 +31,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.delivertracking.Adapter.MyAdapter;
+import com.example.delivertracking.Database.DBConnection;
 import com.example.delivertracking.Database.DBHelper;
 import com.example.delivertracking.Model.ListItem;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -36,6 +40,10 @@ import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.Statement;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -45,12 +53,13 @@ import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CollectionBulk extends AppCompatActivity {
+    Connection conn = null;
 
     TextView city, locationT, date, time, barcodeResult, longitude, latitude;
     EditText address;
     Button scan_btn, submit_btn;
     Spinner spinner;
-    String[] status = {"Mailbag Received","Unable to Collect Mailbag"};
+    String[] status = {"Mailbag Received", "Unable to Collect Mailbag"};
     RecyclerView recyclerView;
     private LinearLayout CustomerForm;
     ArrayList<ListItem> arrayList;
@@ -90,7 +99,7 @@ public class CollectionBulk extends AppCompatActivity {
 
         AtomicBoolean firstClick = new AtomicBoolean(true);
         scan_btn.setOnClickListener(v -> {
-            if (firstClick.get()){
+            if (firstClick.get()) {
                 startScanner();
                 getLastLocation();
                 date.setText(getCurrentDate());
@@ -101,7 +110,7 @@ public class CollectionBulk extends AppCompatActivity {
             }
         });
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(CollectionBulk.this,R.layout.deliver_status_item,status);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(CollectionBulk.this, R.layout.deliver_status_item, status);
         adapter.setDropDownViewResource(R.layout.deliver_status_item);
         spinner.setAdapter(adapter);
 
@@ -120,6 +129,7 @@ public class CollectionBulk extends AppCompatActivity {
                     CustomerForm.setVisibility(View.VISIBLE);
                 }
             }
+
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
 
@@ -131,13 +141,52 @@ public class CollectionBulk extends AppCompatActivity {
             hashSet.addAll(arrayList);
             arrayList.clear();
             arrayList.addAll(hashSet);
-            myAdapter = new MyAdapter(arrayList,this);
+            myAdapter = new MyAdapter(arrayList, this);
             recyclerView.setAdapter(myAdapter);
         }
 
         date.addTextChangedListener(addressTextWatcher);
 
         submit_btn.setOnClickListener(v -> {
+            try {
+                DBConnection connect = new DBConnection();
+                conn = connect.createConnection();
+                String text = spinner.getSelectedItem().toString();
+                if (conn != null) {
+                    Toast.makeText(this, "Connection Established", Toast.LENGTH_LONG).show();
+                    String sqlInsert = "Insert into TBL_Mailbag_Collection_Bulk values ('" + barcodeResult.getText().toString() + "','" + address.getText().toString() + "','" + city.getText().toString() + "','" + date.getText().toString() + "','" + time.getText().toString() + "','" + locationT.getText().toString() + "','" + longitude.getText().toString() + "','" + latitude.getText().toString() + "')";
+                    Statement statement = conn.createStatement();
+                    statement.execute(sqlInsert);
+
+                    ArrayList<ListItem> arr = new ArrayList<>();
+                    SQLiteDatabase db = this.helper.getReadableDatabase();
+                    Cursor cursor = db.rawQuery("Select * from myTable",null);
+
+                    if (cursor != null) {
+                        while (cursor.moveToNext()) {
+
+                         //   ListItem list = new ListItem(id,code,time);
+                          //  for (int i=0; i<cursor.getCount(); i++) {
+                             //   arr.add(list);
+                           // int id = cursor.getInt(0);
+                            String code = cursor.getString(1);
+                            DateFormat df = new SimpleDateFormat("hh:mm a");
+                            String time = cursor.getString(2);
+                            String sqlQ = "Insert into TBL_Collection_List(Barcode,Time)"+" values ('"+code+"','"+time+"')";
+                            PreparedStatement ps = conn.prepareStatement(sqlQ);
+                            ps.execute();
+                           // }
+                        }
+                    }
+                    assert cursor != null;
+                    cursor.close();
+                    db.close();
+                } else {
+                    Toast.makeText(this, "Connection not established", Toast.LENGTH_LONG).show();
+                }
+            } catch (Exception e) {
+                Log.e("Error: ", e.getMessage());
+            }
             barcodeResult.setText(null);
             date.setText(null);
             time.setText(null);
@@ -170,11 +219,13 @@ public class CollectionBulk extends AppCompatActivity {
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 
         }
+
         @Override
         public void onTextChanged(CharSequence s, int start, int before, int count) {
             String addressInput = date.getText().toString().trim();
             submit_btn.setEnabled(!addressInput.isEmpty());
         }
+
         @Override
         public void afterTextChanged(Editable s) {
 
@@ -197,9 +248,9 @@ public class CollectionBulk extends AppCompatActivity {
                             Geocoder geocoder = new Geocoder(CollectionBulk.this, Locale.getDefault());
                             List<Address> addresses;
                             try {
-                                addresses = geocoder.getFromLocation(location.getLatitude(),location.getLongitude(),1);
-                                latitude.setText("latitude :" +addresses.get(0).getLatitude());
-                                longitude.setText("longitude :" +addresses.get(0).getLongitude());
+                                addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
+                                latitude.setText(""+addresses.get(0).getLatitude());
+                                longitude.setText(""+addresses.get(0).getLongitude());
                                 address.setText(addresses.get(0).getAddressLine(0));
                                 locationT.setText(addresses.get(0).getAddressLine(0));
                                 city.setText(addresses.get(0).getLocality());
@@ -214,7 +265,7 @@ public class CollectionBulk extends AppCompatActivity {
     }
 
     private void askPermission() {
-        ActivityCompat.requestPermissions(CollectionBulk.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION},REQUEST_CODE);
+        ActivityCompat.requestPermissions(CollectionBulk.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE);
     }
 
     @Override
@@ -239,20 +290,21 @@ public class CollectionBulk extends AppCompatActivity {
     @SuppressLint("NotifyDataSetChanged")
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        IntentResult result = IntentIntegrator.parseActivityResult(requestCode,resultCode,data);
+        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+        String df = new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(new Date());
         if (result != null) {
-            if (result.getContents() == null){
-                Toast.makeText(this, "Please scan Barcode", Toast.LENGTH_SHORT).show();
+            if (result.getContents() == null) {
+                Toast.makeText(this, "Scan Barcode", Toast.LENGTH_SHORT).show();
             } else {
                 barcodeResult.setText(result.getContents());
-                String isInserted = String.valueOf(helper.insertData(result.getContents(),result.toString()));
+                String isInserted = String.valueOf(helper.insertData(result.getContents(), df.toString()));
 
-                if (result.getContents().equals(isInserted)){
+                if (result.getContents().equals(isInserted)) {
                     Toast.makeText(this, "Already scanned", Toast.LENGTH_SHORT).show();
                 } else {
                     arrayList.clear();
                     arrayList = helper.getAllInformation();
-                    myAdapter = new MyAdapter(arrayList,this);
+                    myAdapter = new MyAdapter(arrayList, this);
                     recyclerView.setAdapter(myAdapter);
                     myAdapter.notifyDataSetChanged();
                 }

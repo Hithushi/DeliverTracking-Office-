@@ -9,6 +9,7 @@ import android.location.Geocoder;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -28,6 +29,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.delivertracking.Adapter.MyAdapter;
+import com.example.delivertracking.Database.DBConnection;
 import com.example.delivertracking.Database.DBHelper;
 import com.example.delivertracking.Model.ListItem;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -36,6 +38,7 @@ import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
 import java.io.IOException;
+import java.sql.Connection;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -45,6 +48,7 @@ import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DeliverBulk extends AppCompatActivity {
+    Connection conn=null;
 
     TextView city, locationT, date, time, barcodeResult, longitude, latitude;
     EditText address;
@@ -138,6 +142,20 @@ public class DeliverBulk extends AppCompatActivity {
         date.addTextChangedListener(addressTextWatcher);
 
         submit_btn.setOnClickListener(v -> {
+            try {
+                ArrayList<ListItem> list = new ArrayList<>();
+                DBConnection connect = new DBConnection();
+                conn = connect.createConnection();
+                if (conn != null) {
+                    Toast.makeText(this, "Connection Established", Toast.LENGTH_LONG).show();
+                    String sql = "Insert into TBL_Collection_List ";
+
+                } else {
+                    Toast.makeText(this, "Connection not established", Toast.LENGTH_LONG).show();
+                }
+            } catch (Exception e) {
+                Log.e("Error: ", e.getMessage());
+            }
             barcodeResult.setText(null);
             address.getText().clear();
             city.setText(null);
@@ -198,8 +216,8 @@ public class DeliverBulk extends AppCompatActivity {
                             List<Address> addresses;
                             try {
                                 addresses = geocoder.getFromLocation(location.getLatitude(),location.getLongitude(),1);
-                                latitude.setText("latitude :" +addresses.get(0).getLatitude());
-                                longitude.setText("longitude :" +addresses.get(0).getLongitude());
+                                latitude.setText(""+addresses.get(0).getLatitude());
+                                longitude.setText(""+addresses.get(0).getLongitude());
                                 address.setText(addresses.get(0).getAddressLine(0));
                                 locationT.setText(addresses.get(0).getAddressLine(0));
                                 city.setText(addresses.get(0).getLocality());
